@@ -1,0 +1,102 @@
+ZooKeeper入门
+
+1. zookeeper是什么，有什么用
+
+zookeeper是一个中心化的服务，可管理配置信息、提供命名服务、分布式一致性及集群服务。
+zookeeper可被应用于分布式的应用程序的开发，解决分布式系统数据一致性问题。
+
+zookeeper的特点：
+- 数据在集群中所有服务器之间保持一致
+- 集群中始终有一个leader，实现了ZAB协议，基于paxos算法
+- 数据树znode，每个节点都绑定一份数据
+
+zookeeper名称的来由：hadoop/impala/shark/hive
+Spark上机器学习类库：mahout
+
+分布式系统理论基础：
+Google三篇论文：GFS/BigTable/MapReduce/Chubby
+对应的开源实现：HDFS/HBase/HadoopMapReduce/ZooKeeper
+
+2. zookeeper的安装、配置、启动、监控
+
+- 下载/上传/解压到三台机器/usr/local/zookeeper-3.4.10
+
+- 配置conf：
+  创建配置文件：cp zoo_sample.cfg zoo.cfg
+  修改zoo.cfg
+  - tickTime 计时单位
+  - initLimit 启动时的sync阶段有多少个计时单位
+  - dataDir 硬盘上存储数据的路径
+  - clientPort 客户端连接时使用的端口
+  - 添加集群中所有结点的IP地址
+    server.1=192.168.56.10:2888:3888
+    server.2=192.168.56.11:2888:3888
+    server.3=192.168.56.12:2888:3888
+  在每个结点的dataDir=/tmp/zookeeper/下创建myid文件，分别写入1/2/3
+
+- 启动：bin/zkServer.sh start
+  关闭：bin/zkServer.sh stop
+  观察后台进程：jps
+  观察日志文件：bin/zookeeper.out
+  观察运行状态：bin/zkServer.sh status
+
+- stop掉leader结点之后观察leader的选举
+
+- zookeeper集群：
+  zookeeper集群初始机器数量建议为奇数
+  集群中只有一个leader，其他为follower
+  若leader宕掉，则剩余机器会自动选举一个新的leader
+  只要整个集群可用机器超过半数即可正常对外提供服务
+
+- WEB界面：taokeeper nodejs-zk-browser jConsole zooinspector
+
+- 客户端连接
+  bin/zkCli.sh -server 192.168.56.10:2181
+  常用命令
+  - 查看可用命令：help
+  - 创建znode：create /tank tankservers
+  - 创建子znode：create /tank/server1 server1info
+  - 创建子znode：create /tank/server2 server2info
+  - 创建子znode：create /tank/server3 server3info
+  - 查看子znode：ls /tank
+  - 获取znode数据：get /tank
+  - 修改znode数据：set /tank tankseversinfo
+  - 查看znode数据：get /tank
+  - 删除znode：delete /tank/server3
+  可连接到别的节点上观察数据一致性
+  必须先创建父结点再创建子结点
+  不能直接删除已包含子结点的znode
+
+- zookeeper应用场景：配置一致、HA、pub/sub、naming service、load balance、分布式锁
+
+- eclipse安装zookeeper的客户端插件
+  http://www.massedynamic.org/eclipse/updates/
+
+3. zookeeper的Java API
+
+- 新建maven工程
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+	  <artifactId>zookeeper</artifactId>
+	  <version>3.4.10<version>
+    </dependency>
+  </dependencies>
+
+- zookeeper使用示例
+  src/main/java/com/my/project/HelloZooKeeper.java
+
+4. HA的开发：active/standby
+
+基于zookeeper的HA示例：src/main/java/com/my/project/HAExample.java
+
+5. CAP理论/paxos算法
+
+CAP不可三者兼得
+- Consistency一致性
+- Availability可用性
+- PartitionTolerance可扩展性（集群）
+
+zookeeper投票算法：FastLeader选举算法
+
+
